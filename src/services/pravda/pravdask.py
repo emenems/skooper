@@ -8,7 +8,7 @@ from src.utils.fetch import fetch_html
 class PravdaSK:
     def __init__(self, article_url: str):
         """Initialize with a 'dirty' URL and clean it."""
-        self.base_url = "https://www.pravda.sk"
+        self.source = "pravdask"
         self.cleaned_url = self._url_cleanup(article_url)
         self.debate_url = self.get_debate_url(self.cleaned_url)
 
@@ -92,6 +92,8 @@ class PravdaSK:
             "rating": self._extract_rating(post.find("div", class_="rating")),
             "timestamp": self._extract_datetime(post.find("span", class_="comment-time")),
             "parent_id": parent_id,
+            "article_url": self.cleaned_url,
+            "source": self.source,
         }
 
         existing_posts.append(post_data)
@@ -120,7 +122,13 @@ class PravdaSK:
         body_div = soup.find("div", itemprop="articleBody")
         body = "\n".join([p.get_text(strip=True) for p in body_div.find_all("p")]) if body_div else ""
 
-        return {"title": title, "description": description, "body": body}
+        return {
+            "title": title,
+            "description": description,
+            "body": body,
+            "article_url": self.cleaned_url,
+            "source": self.source,
+        }
 
     def scrape_comments(self) -> List[Dict]:
         """
@@ -149,7 +157,6 @@ class PravdaSK:
 
             page_comments = []
             for post_nr, post in enumerate(post_list.find_all("div", class_="post", recursive=False), 1):
-                print(f"Processing post {post_nr} on page {page}")
                 page_comments = self.parse_post(post, None, page_comments)
 
             if not page_comments:
