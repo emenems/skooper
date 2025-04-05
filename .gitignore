@@ -40,3 +40,6 @@ htmlcov/
 
 # System files
 Thumbs.db
+
+# secrets
+.env

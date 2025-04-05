@@ -1,8 +1,9 @@
 from typing import List
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from src.services.pravda.pravdask import PravdaSK
 from src.models.article import Comment, Article
+from src.utils.dependencies import api_key_auth
 
 router = APIRouter(
     prefix="/pravda",
@@ -11,7 +12,7 @@ router = APIRouter(
 )
 
 
-@router.get("/article", response_model=Article)
+@router.get("/article", response_model=Article, dependencies=[Depends(api_key_auth)])
 async def get_article(url: str):
     """
     Extract article title, description and body from a pravda.sk article
@@ -26,7 +27,7 @@ async def get_article(url: str):
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
 
 
-@router.get("/comments", response_model=List[Comment])
+@router.get("/comments", response_model=List[Comment], dependencies=[Depends(api_key_auth)])
 async def get_article_comments(url: str):
     """
     Extract all comments from a pravda.sk article
