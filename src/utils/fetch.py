@@ -1,8 +1,10 @@
 import requests
 from fastapi import HTTPException
+from datetime import datetime
+from typing import Tuple
 
 
-def fetch_html(url: str) -> str:
+def fetch_html(url: str) -> Tuple[str, datetime]:
     """
     Fetches the HTML content of a given URL.
 
@@ -11,6 +13,7 @@ def fetch_html(url: str) -> str:
 
     Returns:
         The HTML content as a string.
+        datetime as the timestamp of parsing
 
     Raises:
         HTTPException: If the request fails.
@@ -19,6 +22,6 @@ def fetch_html(url: str) -> str:
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()  # Raise an exception for HTTP errors
-        return response.text
+        return response.text, datetime.now()
     except requests.RequestException as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch HTML content: {str(e)}")

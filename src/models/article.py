@@ -1,13 +1,15 @@
 from pydantic import BaseModel, Field
 from typing import Optional, Literal
+from datetime import datetime
 
 
-class URL(BaseModel):
+class Identifier(BaseModel):
     source: Literal["pravdask"]
     article_url: str = Field(..., description="Full article URL serves also as Unique ID")
+    parsed_at: datetime
 
 
-class Comment(URL):
+class Comment(Identifier):
     post_id: str = Field(..., description="Unique identifier of the comment")
     author: str = Field(default="Anonymous", description="Comment author")
     text: str = Field(..., description="Comment content")
@@ -20,6 +22,7 @@ class Comment(URL):
             "example": {
                 "source": "pravdask",
                 "article_url": "https://spravy.pravda.sk/domace/clanok/747227-nove",
+                "parsed_at": datetime(2025, 4, 5, 12, 30, 0),
                 "post_id": "12345",
                 "author": "JohnDoe",
                 "text": "This is a comment",
@@ -30,7 +33,7 @@ class Comment(URL):
         }
 
 
-class Article(URL):
+class Article(Identifier):
     title: str = Field(default="", description="Article title")
     description: str = Field(default="", description="Article description")
     body: str = Field(default="", description="Article main content")
@@ -40,6 +43,7 @@ class Article(URL):
             "example": {
                 "source": "pravdask",
                 "article_url": "https://spravy.pravda.sk/domace/clanok/747227-nove",
+                "parsed_at": datetime(2025, 4, 5, 12, 30, 0),
                 "title": "Sample Article",
                 "description": "This is a sample article description",
                 "body": "This is the main content of the article...",

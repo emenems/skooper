@@ -65,7 +65,9 @@ class PravdaSK:
         """Extract author from HTML content."""
         return author_html.get_text(strip=True) if author_html else "Anonymous"
 
-    def parse_post(self, post: BeautifulSoup, parent_id: Optional[str], existing_posts: List[dict]) -> List[dict]:
+    def parse_post(
+        self, post: BeautifulSoup, parsed_at: datetime, parent_id: Optional[str], existing_posts: List[dict]
+    ) -> List[dict]:
         """
         Recursively parse a post and its replies.
 
@@ -88,6 +90,7 @@ class PravdaSK:
         post_data = {
             "post_id": post_id,
             "author": self._extract_author(post.find("a", class_="comment-author")),
+            "parsed_at": parsed_at,
             "text": "\n".join([p.get_text(strip=True) for p in content_div.find_all("p")]),
             "rating": self._extract_rating(post.find("div", class_="rating")),
             "timestamp": self._extract_datetime(post.find("span", class_="comment-time")),
@@ -102,7 +105,7 @@ class PravdaSK:
         if post_list:
             replies = post_list.find_all("div", class_="post", recursive=False)
             for reply in replies:
-                self.parse_post(reply, post_id, existing_posts)
+                self.parse_post(reply, parsed_at, post_id, existing_posts)
 
         return existing_posts
 
@@ -113,7 +116,7 @@ class PravdaSK:
         Returns:
             Dictionary containing title, description, and body
         """
-        response_text = fetch_html(self.cleaned_url)
+        response_text, parsed_at = fetch_html(self.cleaned_url)
         soup = BeautifulSoup(response_text, "html.parser")
 
         title = soup.find("h1").get_text(strip=True) if soup.find("h1") else ""
@@ -125,6 +128,7 @@ class PravdaSK:
         return {
             "title": title,
             "description": description,
+            "parsed_at": parsed_at,
             "body": body,
             "article_url": self.cleaned_url,
             "source": self.source,
@@ -148,7 +152,7 @@ class PravdaSK:
                 if page == 1
                 else f"{self.debate_url}?view_mode=vlakna&ordering=od_najnovsieho&strana={page}"
             )
-            response_text = fetch_html(url)
+            response_text, parsed_at = fetch_html(url)
             soup = BeautifulSoup(response_text, "html.parser")
             post_list = soup.find("div", class_="postList")
 
@@ -157,7 +161,7 @@ class PravdaSK:
 
             page_comments = []
             for post_nr, post in enumerate(post_list.find_all("div", class_="post", recursive=False), 1):
-                page_comments = self.parse_post(post, None, page_comments)
+                page_comments = self.parse_post(post, parsed_at, None, page_comments)
 
             if not page_comments:
                 break
